@@ -1,4 +1,6 @@
 import requests
+import schwab_python_api.utilities as Utilities
+import pandas as pd
 
 class Accounts:
     def __init__(self, authInstance):
@@ -70,4 +72,24 @@ class Accounts:
         else:
             response = requests.get(url, headers=self.getHeaders())
         return response.json()
+    
+    def getFormattedPositions(self, accountID):
+        # Get Unformatted Options Positions
+        data = self.getSpecificAccounts(accountID=accountID,fields='positions')
+        
+        # Extract Options Contract Data and Add to Dataframe
+        flattened_products = []
+        if data is not None and 'securitiesAccount' in data and 'positions' in data['securitiesAccount']:
+            for position in data['securitiesAccount']['positions']:
+                product_dict = position['instrument']
+                flattened_products.append({**product_dict, **position})
+
+            df_products = pd.DataFrame(flattened_products)
+        
+        # Extract Expiration Date and Strike from Contract Data
+        util = Utilities()
+        df_positions = util.extract_options_data(df_products)
+        
+        return df_positions
+        
     
