@@ -2,3 +2,5 @@
 *_sandbox.py
 *.pyc
 .DS_Store
+*.pyc
+schwab_token.json
