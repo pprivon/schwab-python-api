@@ -9,7 +9,7 @@ class MarketData:
             authInstance (SchwabAuth): An instance of the SchwabAuth class.
         """
         self.authInstance = authInstance
-        self.baseUrl = "https://api.schwabapi.com/v1/marketdata"
+        self.baseUrl = "https://api.schwabapi.com/marketdata/v1"
 
     def getHeaders(self):
         """
@@ -22,18 +22,33 @@ class MarketData:
             'Authorization': f"Bearer {self.authInstance.accessToken}"
         }
 
-    def getPrices(self, symbols):
+    def getQuotes(self, symbols):
         """
-        Get current prices for the specified symbols.
+        Get current quote for the specified symbols.
         
         Args:
-            symbols (list): A list of symbols to get prices for.
+            symbols (list): A list of symbols to get quote for.
         
         Returns:
-            dict: The JSON response containing the prices.
+            dict: The JSON response containing the quote.
         """
         url = f"{self.baseUrl}/quotes"
         params = {'symbols': ','.join(symbols)}
+        response = requests.get(url, headers=self.getHeaders(), params=params)
+        return response.json()
+    
+    def getQuote(self, symbol):
+        """
+        Get current quote for a single specified symbol.
+        
+        Args:
+            symbols (str): A single symbol to get quote for.
+        
+        Returns:
+            dict: The JSON response containing the quote.
+        """
+        url = f"{self.baseUrl}/{symbol}/quotes"
+        params = {}
         response = requests.get(url, headers=self.getHeaders(), params=params)
         return response.json()
 
@@ -47,7 +62,7 @@ class MarketData:
         Returns:
             dict: The JSON response containing the option expirations.
         """
-        url = f"{self.baseUrl}/options/expirations"
+        url = f"{self.baseUrl}/expirationchain"
         params = {'symbol': symbol}
         response = requests.get(url, headers=self.getHeaders(), params=params)
         return response.json()
@@ -63,7 +78,7 @@ class MarketData:
         Returns:
             dict: The JSON response containing the option chains.
         """
-        url = f"{self.baseUrl}/options/chains"
+        url = f"{self.baseUrl}/chains"
         params = {'symbol': symbol}
         if expirationDate:
             params['expiration_date'] = expirationDate
