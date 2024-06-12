@@ -1,7 +1,7 @@
 import pandas as pd 
 
 class Utilities:
-    def extractOptionsContractSpecifications(df, contractSpecificationColumn='symbol'):
+    def extractOptionsContractSpecifications(self, df, contractSpecificationColumn='symbol'):
         # Regular expression to extract the relevant parts
         regex = r'(\d{6})([CPS])(\d{8})'
 
@@ -12,6 +12,6 @@ class Utilities:
         df['expiry'] = pd.to_datetime(matches[0], format='%y%m%d').dt.strftime('%d-%b-%y')
 
         # Formatting the strike price
-        df['strike'] = matches[2].astype(float) / 1000
+        df['strikePrice'] = matches[2].astype(float) / 1000
 
         return df

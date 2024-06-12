@@ -1,5 +1,5 @@
 import requests
-import schwab_python_api.utilities as Utilities
+from schwab_python_api.utilities import Utilities
 import pandas as pd
 
 class Accounts:
@@ -88,8 +88,31 @@ class Accounts:
         
         # Extract Expiration Date and Strike from Contract Data
         util = Utilities()
-        df_positions = util.extractOptionsContractSpecifications(df_products)
+        df_positions_raw = util.extractOptionsContractSpecifications(df_products)
         
+        # Format Positions Dataframe with Common Headings
+        df_positions = self.formatPositionsDataFrame(df_positions_raw)
         return df_positions
+    
+    def formatPositionsDataFrame(self, df_positions_raw):
+        
+        df_positions_raw.rename(columns={
+            'symbol': 'contractSpec', 
+            'underlying': 'symbol', 
+            'putCall': 'callPut', 
+            }, inplace=True)
+        
+        # Convert 'expiry' column to datetime format
+        df_positions_raw['expiry'] = pd.to_datetime(df_positions_raw['expiry'], format='%d-%b-%y')
+
+        # Extract year, month, and day components
+        df_positions_raw['expiryYear'] = df_positions_raw['expiry'].dt.year
+        df_positions_raw['expiryMonth'] = df_positions_raw['expiry'].dt.month
+        df_positions_raw['expiryDay'] = df_positions_raw['expiry'].dt.day
+        
+        df_positions_raw['quantity'] = df_positions_raw['longQuantity'] - df_positions_raw['shortQuantity']
+
+        return df_positions_raw
+        
         
     
