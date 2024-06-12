@@ -1,7 +1,7 @@
 import pandas as pd 
 
 class Utilities:
-    def extract_options_data(df, contractSpecificationColumn='symbol'):
+    def extractOptionsContractSpecifications(df, contractSpecificationColumn='symbol'):
         # Regular expression to extract the relevant parts
         regex = r'(\d{6})([CPS])(\d{8})'
 
