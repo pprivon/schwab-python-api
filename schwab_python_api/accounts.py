@@ -112,6 +112,9 @@ class Accounts:
         
         df_positions_raw['quantity'] = df_positions_raw['longQuantity'] - df_positions_raw['shortQuantity']
 
+        # Format the 'expiry' column
+        df_positions_raw['expiry'] = df_positions_raw['expiry'].dt.strftime('%d-%b-%y')
+        
         return df_positions_raw
         
         
