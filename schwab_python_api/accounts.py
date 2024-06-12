@@ -98,7 +98,7 @@ class Accounts:
         
         df_positions_raw.rename(columns={
             'symbol': 'contractSpec', 
-            'underlying': 'symbol', 
+            'underlyingSymbol': 'symbol', 
             'putCall': 'callPut', 
             }, inplace=True)
         
@@ -114,6 +114,9 @@ class Accounts:
 
         # Format the 'expiry' column
         df_positions_raw['expiry'] = df_positions_raw['expiry'].dt.strftime('%d-%b-%y')
+        
+        # Replace 'symbol' values with 'contractSpec' values where 'assetType' is 'EQUITY'
+        df_positions_raw.loc[df_positions_raw['assetType'] == 'EQUITY', 'symbol'] = df_positions_raw['contractSpec']
         
         return df_positions_raw
         
