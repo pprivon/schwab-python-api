@@ -88,7 +88,7 @@ class Accounts:
         
         # Extract Expiration Date and Strike from Contract Data
         util = Utilities()
-        df_positions = util.extract_options_data(df_products)
+        df_positions = util.extractOptionsContractSpecifications(df_products)
         
         return df_positions
         

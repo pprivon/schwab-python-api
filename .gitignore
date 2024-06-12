@@ -4,3 +4,8 @@
 .DS_Store
 *.pyc
 schwab_token.json
+schwab_python_api.egg-info/dependency_links.txt
+schwab_python_api.egg-info/PKG-INFO
+schwab_python_api.egg-info/SOURCES.txt
+schwab_python_api.egg-info/top_level.txt
+schwab_python_api/__pycache__/__init__.cpython-310.pyc
