@@ -1,4 +1,5 @@
 import requests
+from urllib import parse 
 
 class MarketData:
     def __init__(self, authInstance):
@@ -32,9 +33,16 @@ class MarketData:
         Returns:
             dict: The JSON response containing the quote.
         """
+        # Convert List to Comma Separated String
+        symbol_str = ','.join(symbols)
+
+        # Construct the URL and parameters
         url = f"{self.baseUrl}/quotes"
-        params = {'symbols': ','.join(symbols)}
+        params = {'symbols': symbol_str}
+
+        # Make the GET request
         response = requests.get(url, headers=self.getHeaders(), params=params)
+        
         return response.json()
     
     def getQuote(self, symbol):
@@ -47,7 +55,10 @@ class MarketData:
         Returns:
             dict: The JSON response containing the quote.
         """
-        url = f"{self.baseUrl}/{symbol}/quotes"
+        # Convert the symbol string to URL-encoded format, encoding all characters
+        html_symbol = parse.quote(symbol, safe='')
+        
+        url = f"{self.baseUrl}/{html_symbol}/quotes"
         params = {}
         response = requests.get(url, headers=self.getHeaders(), params=params)
         return response.json()
