@@ -61,7 +61,12 @@ class MarketData:
         url = f"{self.baseUrl}/{html_symbol}/quotes"
         params = {}
         response = requests.get(url, headers=self.getHeaders(), params=params)
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+        
+        else:
+            print(f"Schwab API getQuote Failure: Ticker: {symbol}: Response Status Code {response.status_code}: {response.reason}")
+            return None
 
     def getOptionExpirations(self, symbol):
         """
