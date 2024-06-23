@@ -199,7 +199,7 @@ class MarketData:
                             'call_theta': call_option.get('theta'),
                             'call_vega': call_option.get('vega'),
                             'call_rho': call_option.get('rho'),
-                            'call_iv': call_option.get('volatility'),
+                            'call_iv': call_option.get('volatility')/100,
                             'call_osi': call_option.get('symbol'),
                             'put_timestamp': put_option.get('quoteTimeInLong'),
                             'put_symbol': put_option.get('symbol'),
@@ -218,7 +218,7 @@ class MarketData:
                             'put_theta': put_option.get('theta'),
                             'put_vega': put_option.get('vega'),
                             'put_rho': put_option.get('rho'),
-                            'put_iv': put_option.get('volatility'),
+                            'put_iv': put_option.get('volatility')/100,
                             'put_osi': put_option.get('symbol'),
                             'expiration_year': expiry_date.year,
                             'expiration_month': expiry_date.month,
@@ -229,7 +229,7 @@ class MarketData:
                 df_option_chain = pd.DataFrame(option_data)
 
             elif response is not None:
-                print(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url}")
+                print(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url} for symbol: {symbol} fromDate: {fromDate} toDate: {toDate}")
         except Exception as Error:
             print(f"Unable to obtain option chains. Error: {Error}")    
             df_option_chain = pd.DataFrame()   
