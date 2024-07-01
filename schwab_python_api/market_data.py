@@ -159,24 +159,34 @@ class MarketData:
             if fromDate is not None:
                 params['fromDate'] = fromDate
                 if toDate is None:
-                    params['toDate'] = toDate
-                else:
                     params['toDate'] = fromDate
+                else:
+                    params['toDate'] = toDate
 
             response = requests.get(url, headers=self.getHeaders(), params=params)
             option_data_raw = response.json()
+
             if response is not None and response.status_code == 200:
                 # Initialize an empty list to hold the processed option chain data
                 option_data = []
+                
                 # Extract call and put maps
                 call_map = option_data_raw.get('callExpDateMap', {})
                 put_map = option_data_raw.get('putExpDateMap', {})
+                
+                
                 # Iterate through each expiration date in the callExpDateMap
                 for expiry in call_map:
                     expiry_date_str, dte = expiry.split(':')
                     expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d')
+                    
+                    # Create a set of common strikes in both call and put maps for this expiry
+                    call_strikes = set(call_map.get(expiry, {}).keys())
+                    put_strikes = set(put_map.get(expiry, {}).keys())
+                    common_strikes = sorted(call_strikes.intersection(put_strikes), key=float)
+                    
                     # Iterate through each strike price within the expiration date
-                    for strike_price in call_map[expiry]:
+                    for strike_price in common_strikes:
                         call_option = call_map[expiry][strike_price][0]
                         put_option = put_map[expiry][strike_price][0]
                         # Add the parsed data to the list
