@@ -116,7 +116,7 @@ class Accounts:
         df_positions_raw['expiry'] = df_positions_raw['expiry'].dt.strftime('%d-%b-%y')
         
         # Replace 'symbol' values with 'contractSpec' values where 'assetType' is 'EQUITY'
-        df_positions_raw.loc[df_positions_raw['assetType'] == 'EQUITY', 'symbol'] = df_positions_raw['contractSpec']
+        df_positions_raw.loc[df_positions_raw['assetType'].isin(['EQUITY', 'COLLECTIVE_INVESTMENT', 'MUTUAL_FUND', 'INDEX']), 'symbol'] = df_positions_raw['contractSpec']
         
         return df_positions_raw
         
