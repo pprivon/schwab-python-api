@@ -15,3 +15,11 @@ class Utilities:
         df['strikePrice'] = matches[2].astype(float) / 1000
 
         return df
+    
+    def convertDatetimeToUnixEpoch(self, date_datetime):
+        
+        unix_timestamp_milliseconds = int(date_datetime.timestamp() * 1000)
+        
+        return unix_timestamp_milliseconds
+        
+        

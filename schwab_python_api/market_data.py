@@ -3,7 +3,7 @@ from urllib import parse
 from datetime import datetime, timezone
 import pandas as pd
 import json
-
+from schwab_python_api.utilities import Utilities
 
 class MarketData:
     def __init__(self, authInstance):
@@ -265,10 +265,14 @@ class MarketData:
         url = f"{self.baseUrl}/pricehistory"
         params = {'symbol': symbol}
         
+        util = Utilities()
+        
         if startDate:
-            params['start_date'] = startDate
+            startDate_epoch = util.convertDatetimeToUnixEpoch(startDate)
+            params['start_date'] = startDate_epoch
         if endDate:
-            params['end_date'] = endDate
+            endDate_epoch = util.convertDatetimeToUnixEpoch(endDate)
+            params['end_date'] = endDate_epoch
         if frequencyType:
             params['frequency_type'] = frequencyType
         if frequency:
