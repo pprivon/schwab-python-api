@@ -1,6 +1,7 @@
 import requests
 from urllib import parse 
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import pandas as pd
 import json
 from schwab_python_api.utilities import Utilities
@@ -246,7 +247,7 @@ class MarketData:
             
         return df_option_chain
 
-    def getPriceHistory(self, symbol, startDate=None, endDate=None, frequencyType=None, frequency=None, periodType=None, period=None):
+    def getPriceHistory(self, symbol, startDate=None, endDate=None, frequencyType=None, frequency=None, periodType=None, period=None, needExtendedHoursData=None, needPreviousClose=None):
         """
         Get price history for the specified symbol with optional parameters.
         
@@ -258,6 +259,8 @@ class MarketData:
             frequency (int, optional): The frequency of data points.
             periodType (str, optional): The period type (day, month, year, ytd).
             period (int, optional): The period of data points.
+            needExtendedHoursData (boolean, optional): Need extended hours data.
+            needPreviousClose (boolean, optional): Need previous close price.
         
         Returns:
             dict: The JSON response containing the price history.
@@ -267,20 +270,53 @@ class MarketData:
         
         util = Utilities()
         
-        if startDate:
-            startDate_epoch = util.convertDatetimeToUnixEpoch(startDate)
-            params['start_date'] = startDate_epoch
-        if endDate:
-            endDate_epoch = util.convertDatetimeToUnixEpoch(endDate)
-            params['end_date'] = endDate_epoch
-        if frequencyType:
-            params['frequency_type'] = frequencyType
-        if frequency:
-            params['frequency'] = frequency
         if periodType:
-            params['period_type'] = periodType
+            params['periodType'] = periodType
         if period:
             params['period'] = period
-        
+        if frequencyType:
+            params['frequencyType'] = frequencyType
+        if frequency:
+            params['frequency'] = frequency
+        if startDate:
+            startDate_epoch = util.convertDatetimeToUnixEpoch(startDate)
+            params['startDate'] = startDate_epoch
+        if endDate:
+            endDate_epoch = util.convertDatetimeToUnixEpoch(endDate)
+            params['endDate'] = endDate_epoch
+        if needExtendedHoursData:
+            params['needExtendedHoursData'] = needExtendedHoursData
+        if needPreviousClose:
+            params['needPreviousClose'] = needPreviousClose
+
         response = requests.get(url, headers=self.getHeaders(), params=params)
-        return response.json()
+        
+        price_history_json = response.json()
+
+        try:
+            if response is not None and response.status_code == 200:
+                if 'candles' in price_history_json:
+                    df_price_history = pd.DataFrame(price_history_json['candles'])
+                    
+                    # Convert the epoch milliseconds to datetime objects in UTC
+                    df_price_history['datetime_utc'] = pd.to_datetime(df_price_history['datetime'], unit='ms', utc=True)
+
+                    # Convert the datetime objects to Eastern Time
+                    df_price_history['datetime_eastern'] = df_price_history['datetime_utc'].dt.tz_convert('US/Eastern')
+
+                    # Split the datetime string into separate date and time columns
+                    df_price_history['date'] = df_price_history['datetime_eastern'].dt.strftime('%Y-%m-%d')
+                    df_price_history['time'] = df_price_history['datetime_eastern'].dt.strftime('%H:%M:%S %Z%z')
+
+                    # Drop the intermediate columns if needed
+                    df_price_history.drop(columns=['datetime_utc', 'datetime_eastern'], inplace=True)
+
+                else:
+                    raise ValueError
+            else:
+                raise ValueError
+        
+        except Exception as Error:
+            print(f"Unable to obtain price history. Error: {Error}")    
+            df_price_history = pd.DataFrame()   
+        return df_price_history
