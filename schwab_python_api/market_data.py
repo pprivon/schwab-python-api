@@ -1,10 +1,13 @@
+import logging
 import requests
-from urllib import parse 
+from urllib import parse
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 import pandas as pd
 import json
 from schwab_python_api.utilities import Utilities
+
+logger = logging.getLogger(__name__)
 
 class MarketData:
     def __init__(self, authInstance):
@@ -70,7 +73,7 @@ class MarketData:
             return response.json()
         
         else:
-            print(f"Schwab API getQuote Failure: Ticker: {symbol}: Response Status Code {response.status_code}: {response.reason}")
+            logger.warning(f"Schwab API getQuote Failure: Ticker: {symbol}: Response Status Code {response.status_code}: {response.reason}")
             return None
 
     def getOptionExpirations(self, symbol):
@@ -124,18 +127,18 @@ class MarketData:
                         i = i + 1
                     return df_exp_date
                 else:
-                    print("No expiration dates available.")
-                    df_exp_date = pd.DataFrame()  
+                    logger.warning("No expiration dates available.")
+                    df_exp_date = pd.DataFrame()
                     return df_exp_date
-            
+
             elif response is not None:
-                print(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url}")
-                df_exp_date = pd.DataFrame()  
+                logger.warning(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url}")
+                df_exp_date = pd.DataFrame()
                 return df_exp_date
-            
+
         except Exception as Error:
-            print(f"Unable to obtain option chain expirations. Error: {Error}")    
-            df_exp_date = pd.DataFrame()  
+            logger.exception(f"Unable to obtain option chain expirations. Error: {Error}")
+            df_exp_date = pd.DataFrame()
             return df_exp_date
             
 
@@ -151,6 +154,7 @@ class MarketData:
         Returns:
             dict: The JSON response containing the option chains.
         """
+        df_option_chain = pd.DataFrame()
         try:
             endpoint = '/chains'
             url = f"{self.baseUrl}{endpoint}"
@@ -240,11 +244,11 @@ class MarketData:
                 df_option_chain = pd.DataFrame(option_data)
 
             elif response is not None:
-                print(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url} for symbol: {symbol} fromDate: {fromDate} toDate: {toDate}")
+                logger.warning(f"Endpoint {endpoint} returned status {response.status_code}: {response.text}, {response.url} for symbol: {symbol} fromDate: {fromDate} toDate: {toDate}")
         except Exception as Error:
-            print(f"Unable to obtain option chains. Error: {Error}")    
-            df_option_chain = pd.DataFrame()   
-            
+            logger.exception(f"Unable to obtain option chains. Error: {Error}")
+            df_option_chain = pd.DataFrame()
+
         return df_option_chain
 
     def getPriceHistory(self, symbol, startDate=None, endDate=None, frequencyType=None, frequency=None, periodType=None, period=None, needExtendedHoursData=None, needPreviousClose=None):
@@ -317,6 +321,6 @@ class MarketData:
                 raise ValueError
         
         except Exception as Error:
-            print(f"Unable to obtain price history. Error: {Error}")    
-            df_price_history = pd.DataFrame()   
+            logger.exception(f"Unable to obtain price history. Error: {Error}")
+            df_price_history = pd.DataFrame()
         return df_price_history
