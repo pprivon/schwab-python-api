@@ -88,6 +88,16 @@ class AmPmRoots(unittest.TestCase):
         self.assertEqual(len(w), 2)
         self.assertEqual(set(w.call_option_root), {"AAAW"})
 
+    def test_call_side_is_call_and_put_side_is_put(self):
+        # A call/put swap anywhere in the pairing must be visible.
+        for _, row in self.m.iterrows():
+            self.assertEqual(row.call_option_type, "CALL")
+            self.assertEqual(row.put_option_type, "PUT")
+            self.assertTrue(row.call_symbol.startswith(row.call_option_root + "_CALL_"))
+            self.assertTrue(row.put_symbol.startswith(row.put_option_root + "_PUT_"))
+            self.assertEqual(row.call_osi, row.call_symbol)
+            self.assertEqual(row.put_osi, row.put_symbol)
+
     def test_pairing_ignores_list_order(self):
         # puts list the roots in the opposite order to calls
         payload = chain({100: ["AAA", "AAAW"]}, {})
@@ -110,6 +120,23 @@ class AmPmRoots(unittest.TestCase):
         m = run(payload)
         m = m[m.expiration_day == 16]
         self.assertEqual(sorted(m.call_option_root), ["AAA", "AAAW"])
+
+    def test_put_missing_optionRoot_is_skipped_not_paired(self):
+        # Behaviour change from 0.1.2, which paired by position: a call whose
+        # root is present is NOT paired with a put that carries no root.
+        payload = chain({100: ["AAA"]}, {})
+        bad = contract("AAA", "PUT", 100, 0)
+        del bad["optionRoot"]
+        m = run(payload, put_override={"100": [bad]})
+        self.assertEqual(len(m[m.expiration_day == 16]), 0)
+
+    def test_call_missing_optionRoot_is_skipped_not_paired(self):
+        payload = chain({100: ["AAA"]}, {})
+        bad = contract("AAA", "CALL", 100, 0)
+        del bad["optionRoot"]
+        payload["callExpDateMap"]["2099-01-16:10"] = {"100": [bad]}
+        m = run(payload)
+        self.assertEqual(len(m[m.expiration_day == 16]), 0)
 
 
 if __name__ == "__main__":
