@@ -188,54 +188,20 @@ class MarketData:
                     
                     # Iterate through each strike price within the expiration date
                     for strike_price in common_strikes:
-                        call_option = call_map[expiry][strike_price][0]
-                        put_option = put_map[expiry][strike_price][0]
-                        # Add the parsed data to the list
-                        option_data.append({
-                            'timestamp': current_timestamp,
-                            'call_timestamp': call_option.get('quoteTimeInLong'),
-                            'call_symbol': call_option.get('symbol'),
-                            'call_option_root': call_option.get('optionRoot'),
-                            'call_option_type': call_option.get('putCall'),
-                            'call_strike_price': call_option.get('strikePrice'),
-                            'call_volume': call_option.get('totalVolume'),
-                            'call_open_interest': call_option.get('openInterest'),
-                            'call_last_price': call_option.get('last'),
-                            'call_bid': call_option.get('bid'),
-                            'call_ask': call_option.get('ask'),
-                            'call_itm': max(call_option.get('intrinsicValue'),0),
-                            'call_net_change': call_option.get('netChange'),
-                            'call_delta': call_option.get('delta'),
-                            'call_gamma': call_option.get('gamma'),
-                            'call_theta': call_option.get('theta'),
-                            'call_vega': call_option.get('vega'),
-                            'call_rho': call_option.get('rho'),
-                            'call_iv': call_option.get('volatility')/100,
-                            'call_osi': call_option.get('symbol'),
-                            'put_timestamp': put_option.get('quoteTimeInLong'),
-                            'put_symbol': put_option.get('symbol'),
-                            'put_option_root': put_option.get('optionRoot'),
-                            'put_option_type': put_option.get('putCall'),
-                            'put_strike_price': put_option.get('strikePrice'),
-                            'put_volume': put_option.get('totalVolume'),
-                            'put_open_interest': put_option.get('openInterest'),
-                            'put_last_price': put_option.get('last'),
-                            'put_bid': put_option.get('bid'),
-                            'put_ask': put_option.get('ask'),
-                            'put_itm': max(put_option.get('intrinsicValue'),0),
-                            'put_net_change': put_option.get('netChange'),
-                            'put_delta': put_option.get('delta'),
-                            'put_gamma': put_option.get('gamma'),
-                            'put_theta': put_option.get('theta'),
-                            'put_vega': put_option.get('vega'),
-                            'put_rho': put_option.get('rho'),
-                            'put_iv': put_option.get('volatility')/100,
-                            'put_osi': put_option.get('symbol'),
-                            'expiration_year': expiry_date.year,
-                            'expiration_month': expiry_date.month,
-                            'expiration_day': expiry_date.day,
-                            'expiration_date': expiry_date.strftime('%d-%b-%y'),
-                        })
+                        # A strike can list several roots (monthly expiries carry
+                        # both the AM and the PM contract). Pair calls and puts by
+                        # optionRoot and emit one row per (strike, root).
+                        put_by_root = {}
+                        for p in put_map[expiry][strike_price]:
+                            put_by_root.setdefault(p.get('optionRoot'), p)
+                        seen_roots = set()
+                        for call_option in call_map[expiry][strike_price]:
+                            root = call_option.get('optionRoot')
+                            put_option = put_by_root.get(root)
+                            if put_option is None or root in seen_roots:
+                                continue
+                            seen_roots.add(root)
+                            option_data.append(self._chain_row(current_timestamp, expiry_date, call_option, put_option))
                 # Convert the list to a DataFrame
                 df_option_chain = pd.DataFrame(option_data)
 
@@ -246,6 +212,55 @@ class MarketData:
             df_option_chain = pd.DataFrame()   
             
         return df_option_chain
+
+    @staticmethod
+    def _chain_row(current_timestamp, expiry_date, call_option, put_option):
+        # Add the parsed data to the list
+        return {
+            'timestamp': current_timestamp,
+            'call_timestamp': call_option.get('quoteTimeInLong'),
+            'call_symbol': call_option.get('symbol'),
+            'call_option_root': call_option.get('optionRoot'),
+            'call_option_type': call_option.get('putCall'),
+            'call_strike_price': call_option.get('strikePrice'),
+            'call_volume': call_option.get('totalVolume'),
+            'call_open_interest': call_option.get('openInterest'),
+            'call_last_price': call_option.get('last'),
+            'call_bid': call_option.get('bid'),
+            'call_ask': call_option.get('ask'),
+            'call_itm': max(call_option.get('intrinsicValue'),0),
+            'call_net_change': call_option.get('netChange'),
+            'call_delta': call_option.get('delta'),
+            'call_gamma': call_option.get('gamma'),
+            'call_theta': call_option.get('theta'),
+            'call_vega': call_option.get('vega'),
+            'call_rho': call_option.get('rho'),
+            'call_iv': call_option.get('volatility')/100,
+            'call_osi': call_option.get('symbol'),
+            'put_timestamp': put_option.get('quoteTimeInLong'),
+            'put_symbol': put_option.get('symbol'),
+            'put_option_root': put_option.get('optionRoot'),
+            'put_option_type': put_option.get('putCall'),
+            'put_strike_price': put_option.get('strikePrice'),
+            'put_volume': put_option.get('totalVolume'),
+            'put_open_interest': put_option.get('openInterest'),
+            'put_last_price': put_option.get('last'),
+            'put_bid': put_option.get('bid'),
+            'put_ask': put_option.get('ask'),
+            'put_itm': max(put_option.get('intrinsicValue'),0),
+            'put_net_change': put_option.get('netChange'),
+            'put_delta': put_option.get('delta'),
+            'put_gamma': put_option.get('gamma'),
+            'put_theta': put_option.get('theta'),
+            'put_vega': put_option.get('vega'),
+            'put_rho': put_option.get('rho'),
+            'put_iv': put_option.get('volatility')/100,
+            'put_osi': put_option.get('symbol'),
+            'expiration_year': expiry_date.year,
+            'expiration_month': expiry_date.month,
+            'expiration_day': expiry_date.day,
+            'expiration_date': expiry_date.strftime('%d-%b-%y'),
+        }
 
     def getPriceHistory(self, symbol, startDate=None, endDate=None, frequencyType=None, frequency=None, periodType=None, period=None, needExtendedHoursData=None, needPreviousClose=None):
         """
