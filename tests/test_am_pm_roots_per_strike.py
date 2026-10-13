@@ -127,16 +127,14 @@ class AmPmRoots(unittest.TestCase):
         payload = chain({100: ["AAA"]}, {})
         bad = contract("AAA", "PUT", 100, 0)
         del bad["optionRoot"]
-        m = run(payload, put_override={"100": [bad]})
-        self.assertEqual(len(m[m.expiration_day == 16]), 0)
+        self.assertEqual(len(run(payload, put_override={"100": [bad]})), 0)
 
     def test_call_missing_optionRoot_is_skipped_not_paired(self):
         payload = chain({100: ["AAA"]}, {})
         bad = contract("AAA", "CALL", 100, 0)
         del bad["optionRoot"]
         payload["callExpDateMap"]["2099-01-16:10"] = {"100": [bad]}
-        m = run(payload)
-        self.assertEqual(len(m[m.expiration_day == 16]), 0)
+        self.assertEqual(len(run(payload)), 0)
 
 
 if __name__ == "__main__":
